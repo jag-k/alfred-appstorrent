@@ -8,3 +8,6 @@ reqirements.txt
 .gitignore
 .buildignore
 .github/workflows/release.yml
+.github/workflows/changelog.yml
+.github/ISSUE_TEMPLATE/bug_report.md
+.github/ISSUE_TEMPLATE/feature_request.md

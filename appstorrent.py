@@ -2,8 +2,8 @@
 # encoding: utf-8
 from __future__ import unicode_literals
 
-import argparse
 import sys
+from pprint import pprint
 
 from constants import *
 from workflow import ICON_ERROR, ICON_WEB, ICON_INFO
@@ -119,7 +119,7 @@ def main(wf):
         ))
 
         if programs is None:
-            log.debug("Programs loadind...")
+            log.debug("Programs loading...")
 
         elif "id" in prefixes:
             pr = list(filter(lambda x: x.get('id') == query, programs["data"]['items']))
@@ -236,6 +236,151 @@ def main(wf):
                     title=item['title'],
                     subtitle="(↹ для доп. информации) %s  ●  %s" % (item["description"], item['version']),
                     autocomplete="pid:" + item['id'],
+                    arg=item["href"],
+                    icon=icon,
+                    quicklookurl=icon,
+                    copytext=item['href'],
+                    valid=True,
+                    largetext=item["title"],
+                )
+                i.add_modifier(
+                    "cmd",
+                    "Скопировать ссылку",
+                    arg=item["href"],
+                    valid=True
+                )
+                i.add_modifier(
+                    "shift",
+                    'Посмотреть "%s" в Alfred' % item['title'],
+                    # valid=False
+                )
+                # wf.rerun = 2
+
+    if "g" in prefixes:
+        games = wf.get_background_data(GAMES, max_age=MAX_AGE, rerun_item=dict(
+            title="Поиск по играм",
+            autocomplete="g:",
+            icon=ICON_VIDEO_GAME,
+        ))
+
+        if games is None:
+            log.debug("Games loading...")
+
+        elif "id" in prefixes:
+            gm = list(filter(lambda x: x.get('id') == query, games["data"]['items']))
+            if not gm:
+                wf.add_item(
+                    title="Такой игры не существует!",
+                    subtitle="Введите другой ID",
+                    autocomplete="g:" + query,
+                    icon=ICON_ERROR,
+                )
+            else:
+                item = gm[0]  # type: dict
+                icon = wf.cached_data(item['id'], None, 0)
+                _id = item["id"]
+
+                data = wf.get_background_data("info_" + _id, max_age=MAX_AGE, args=[_id], task="info-game", rerun_item=dict(
+                    title='Получение данных об игре "%s"' % item['title'],
+                    icon=icon,
+                    autocomplete="gid:" + _id
+                ))
+
+                if data is not None:
+                    wf.add_item(
+                        title=data["name"],
+                        subtitle=data["short_description"],
+                        icon=icon,
+                        type="file",
+                        quicklookurl=item['href'],
+                        copytext=item['href']
+                    )
+                    wf.add_item(
+                        title="Последнее обновление: %s" % data['last_update'],
+                        subtitle="Просмотров: %s" % data['views'],
+                    )
+                    wf.add_item(
+                        title="Издатель / Автор",
+                        subtitle=data["author"],
+                        largetext=data["author"],
+                        icon=ICON_BUSTS_IN_SILHOUETTE,
+                    )
+
+                    info = data["info"]  # type: dict
+                    if info:
+                        for k, v in info.items():
+                            wf.add_item(
+                                title=k,
+                                subtitle=v,
+                                largetext=v,
+                                icon=ICON_INFO
+                            )
+
+                    wf.add_item(
+                        title="Веб-сайт",
+                        subtitle=data['website'],
+                        arg=data["website"],
+                        icon=ICON_WEB,
+                        quicklookurl=data["website"],
+                        valid=True
+                    )
+                    wf.add_item(
+                        title="Описание (⌘+L для просмотра)",
+                        subtitle=data["description"],
+                        largetext=data["description"],
+                        icon=ICON_PAGE_FACING_UP,
+                    )
+                    attachment = data['attachment']
+                    if attachment['href']:
+                        wf.add_item(
+                            title=attachment['text'] or "Ссылка на скачивание",
+                            subtitle=attachment['href'],
+                            arg=attachment['href'],
+                            icon=ICON_LINK,
+                            valid=True
+                        )
+                    similar = data['similar']
+                    if similar:
+                        wf.add_item(
+                            title="Похожие игры:",
+                            subtitle="Найдено %s штук" % len(similar),
+                            icon=ICON_VIDEO_GAME
+                        )
+                        for i in similar:
+                            s_icon = wf.cached_data(i['id'], None, 0)
+                            wf.add_item(
+                                title=i['title'],
+                                subtitle="(↹ для доп. информации) %s" % i["description"],
+                                autocomplete="gid:" + i['id'],
+                                arg=i["href"],
+                                icon=s_icon,
+                                quicklookurl=s_icon,
+                                copytext=i['href'],
+                                valid=True,
+                                largetext=i["title"],
+                            )
+
+        else:
+            c = games['data']['count']
+            dat = wf.filter(query, games['data']['items'], _filter)
+            wf.add_item(
+                title="Поиск по играм",
+                subtitle='Найдено %s игр%s' % (
+                    c if len(dat) == c else "%s из %s" % (len(dat), c),
+                    'a' if c % 10 == 1 else (
+                        'ы' if c % 10 in range(2, 5) else ''
+                    )
+                ),
+                icon=ICON_VIDEO_GAME,
+                autocomplete="g:"
+            )
+
+            for item in dat:
+                icon = wf.cached_data(item['id'], None, 0)
+                i = wf.add_item(
+                    title=item['title'],
+                    subtitle="(↹ для доп. информации) %s" % (item["description"]),
+                    autocomplete="gid:" + item['id'],
                     arg=item["href"],
                     icon=icon,
                     quicklookurl=icon,

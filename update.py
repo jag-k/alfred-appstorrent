@@ -33,9 +33,7 @@ def task_games(wf):
 
     for i in dat['data']['items']:
         name, url = i["id"], i['img']
-        # cmd = ['/usr/bin/python', wf.workflowfile("update.py"), "download", name, url]
-        # run_in_background("download_" + name, cmd)
-        Task.run("download", name, url)
+        wf.get_background_data(name, None, MAX_AGE*7, "download", [name, url])
 
 
 @Task("download")
@@ -45,9 +43,10 @@ def download_img(wf, name, url):
     img_name = os.path.abspath(join(ICON_DIR, "%s.%s" % (name, ext)))
     if not (os.path.exists(ICON_DIR) and os.path.isdir(ICON_DIR)):
         os.makedirs(ICON_DIR)
-    d = request('get', url).raw
-    with open(img_name, 'wb') as img:
-        img.write(d.read())
+    if not os.path.exists(img_name):
+        d = request('get', url).raw
+        with open(img_name, 'wb') as img:
+            img.write(d.read())
     wf.cached_data(name, lambda: img_name, MAX_AGE * 7)
     return img_name
 
@@ -89,6 +88,72 @@ def download_info(wf, _id):
             "description": a.find("div", {"class": "pr-desc"}).text,
             "version": a.find("div", {"class": "pr-desc2"}).text,
             "title": a.find("div", {"class": "pr-title"}).text,
+            "href": a.get("href", ''),
+        })
+
+    attachment_a = bs.find("a", {"class": "attachmentfile"})
+    attachment = {
+        "href": "",
+        "text": ""
+    } if attachment_a is None else {
+        "href": attachment_a.get("href"),
+        "text": attachment_a.text
+    }
+
+    res = {
+        "website": bd.find("div", {"class": "gamefulltitle"}).find("a").get("href", ""),
+        "views": int(bs.find("div", {"class": "viewsnews"}).text.replace(" ", "")),
+        "short_description": bs.find("div", {"class": "gameposterfull"}).text,
+        "description": bd.find("div", {"class": "gamefullglav"}).text,
+        "last_update": bs.find("div", {"class": "calendarnews"}).text,
+        "author": bs.find("div", {"class": "subtitgamefull"}).text,
+        "name": bs.find("div", {"class": "titgamefull"}).text,
+        "attachment": attachment,
+        "similar": similar,
+        "info": info,
+    }
+    # pprint(res)
+    wf.cached_data("info_" + _id, lambda: res, MAX_AGE)
+    return res
+
+
+@Task("info-game")
+def download_info_game(wf, _id):
+    # type: (Workflow, Str) -> dict
+    from appstorrent_api import join, BASE_URL, get_bs
+
+    url = "https://www.appstorrent.ru/%s.html" % _id
+    r = get(url).content
+    bs = get_bs(r)
+
+    info = {}
+
+    bi = bs.find("div", {"class": "gameinfo"})
+    # print(bi)
+    for punkt in bi.findAll("div", {"class": "punkt"}):
+        info[punkt.find("span").text] = punkt.find("p").text
+    for punkt in bi.findAll("div", {"class": "punktscor"}):
+        info[punkt.find("span").text] = punkt.find("div", {"class": "scora"}).text
+
+    categories = {}
+    for a in bs.find("div", {"class": "gameposterlink"}).findAll("a"):
+        categories[a.get('href', '').strip("/").rsplit("/", 1)[-1]] = a.text
+
+    # pprint(info)
+    # pprint(categories)
+
+    bd = bs.find("div", {"class": "gamefull"})
+    bp = bs.find("ul", {"class": "games-item"})
+
+    similar = []
+    for li in bp.findAll("li", {"class": "games-item"}):
+        a = li.find("a")
+        text = li.find("div", {"class": "games-text"})
+        similar.append({
+            "id": a.get("href", '').strip('/').rsplit("/", 1)[-1].rsplit(".", 1)[0],
+            "img": join(BASE_URL, a.find("img").get("src", "").strip("/")),
+            "description": text.find("div", {"class": "games-desc"}).text,
+            "title": text.find("div", {"class": "games-title"}).text,
             "href": a.get("href", ''),
         })
 
