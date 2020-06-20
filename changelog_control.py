@@ -211,7 +211,7 @@ def check_commit(file_path):
                 if not msg.endswith(':'):
                     UNRELEASED.setdefault(state, [])
                     line = msg[len(act):].strip().strip('.')
-                    print u"ADDED '%s'\tIN '%s'" % (line, state)
+                    print "ADDED '%r'\tIN '%r'" % (line, state)
                     UNRELEASED[state].append(line)
                     state = None
                 continue
@@ -273,7 +273,7 @@ def new_release(tag):
     with open("release.txt", "w") as release_file:
         release_file.write(release_body)
 
-    print u"ADDED NEW RELEASE IN CHANGELOG: %s" % tag
+    print "ADDED NEW RELEASE IN CHANGELOG: %s" % tag
     UNRELEASED.clear()
     return 0
 
