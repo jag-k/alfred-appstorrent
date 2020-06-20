@@ -1,0 +1,46 @@
+name: "Changelog-from-commit-message"
+
+on:
+  push
+
+env:
+  CHANGELOG_FILE: CHANGELOG.md
+  EMAIL: jag-k58@ya.ru
+  LOGIN: jag-k
+
+jobs:
+  cl-msg:
+    name: "Update Changelog"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Clone Repo"
+        uses: actions/checkout@v2.3.0
+
+      - name: "Set up Python 2.7"
+        uses: actions/setup-python@v2
+        with:
+          python-version: 2.7
+
+      - name: "Update `${{ env.CHANGELOG_FILE }}`"
+        run: |
+          python changelog_control.py
+
+      - name: "Upload a Build Artifact"
+        uses: actions/upload-artifact@v2
+        with:
+          name: Changelog.md
+          path: ${{ env.CHANGELOG_FILE }}
+
+      - name: "Git Commit and Push"
+        if: ${{ env.CHANGED_CHANGELOG == 'true' }}
+        run: |
+          git config user.email ${{ env.EMAIL }}
+          git config user.name ${{ env.LOGIN }}
+          {
+            git add ${{ env.CHANGELOG_FILE }}
+            git commit -m ":octocat: GitHub Actions Changelog"
+            git push
+          } || {
+            echo "Nothing to commit"
+          }

@@ -1,0 +1,10 @@
+build.py
+changelog_control.py
+CHANGELOG.md
+README.md
+commit-msg.sh
+pre-commit.sh
+reqirements.txt
+.gitignore
+.buildignore
+.github/workflows/release.yml
