@@ -273,7 +273,7 @@ def new_release(tag):
     with open("release.txt", "w") as release_file:
         release_file.write(release_body)
 
-    print "ADDED NEW RELEASE IN CHANGELOG: %s" % tag
+    print u"ADDED NEW RELEASE IN CHANGELOG: %s" % tag
     UNRELEASED.clear()
     return 0
 
