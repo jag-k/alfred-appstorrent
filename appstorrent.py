@@ -276,10 +276,10 @@ if __name__ == u"__main__":
     wf = Workflow(
         libraries=LIBRARIES,
         update_settings={
-            'github_slug': 'jag-k/appstorrent-workflow',
+            'github_slug': 'jag-k/alfred-appstorrent',
             'version': __version__,
             # 'frequency': 7,
-            'prereleases': '-beta' in __version__
+            'prereleases': '-' in __version__
         }
     )
     log = wf.logger
