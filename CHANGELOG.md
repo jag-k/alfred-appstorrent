@@ -8,4 +8,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
  - Normal release??.
 
-[Unreleased]: https://github.com/jag-k/AppStorrent-Workflow
+[Unreleased]: https://github.com/jag-k/alfred-appstorrent
