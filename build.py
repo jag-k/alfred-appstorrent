@@ -21,7 +21,7 @@ def update_plist(plist_file_or_path=None):
         if os.path.isfile("README.md"):
             with open("README.md", encoding="UTF-8") as readme_file:
                 readme = readme_file.readlines()
-                readme_lines = list(map(lambda x: x.lstrip("#").strip(), readme))
+                readme_lines = list(map(lambda x: x.lstrip('#').strip(), readme))
                 name = readme_lines[0]
                 if len(readme_lines) >= 2:
                     plist['description'] = readme_lines[1]
@@ -58,7 +58,7 @@ def build(filename, plist_file_or_path=None):
             z.write(f)
 
     print "::set-env name=TAG::" + __version__
-    print "::set-env name=PRERELEASE::%s" % str("-" in __version__).lower()
+    print "::set-env name=PRERELEASE::%s" % str('-' in __version__).lower()
     return filename
 
 

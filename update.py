@@ -65,13 +65,13 @@ def download_info(wf, _id):
     bi = bs.find("div", {"class": "gameinfo"})
     # print(bi)
     for punkt in bi.findAll("div", {"class": "punkt"}):
-        info[punkt.find("span").text] = punkt.find("p").text
+        info[punkt.find("span").text] = punkt.find('p').text
     for punkt in bi.findAll("div", {"class": "punktscor"}):
         info[punkt.find("span").text] = punkt.find("div", {"class": "scora"}).text
 
     categories = {}
-    for a in bs.find("div", {"class": "gameposterlink"}).findAll("a"):
-        categories[a.get('href', '').strip("/").rsplit("/", 1)[-1]] = a.text
+    for a in bs.find("div", {"class": "gameposterlink"}).findAll('a'):
+        categories[a.get('href', '').strip('/').rsplit('/', 1)[-1]] = a.text
 
     # pprint(info)
     # pprint(categories)
@@ -81,17 +81,17 @@ def download_info(wf, _id):
 
     similar = []
     for li in bp.findAll("li", {"class": "pr-item"}):
-        a = li.find("a")
+        a = li.find('a')
         similar.append({
-            "id": a.get("href", '').strip('/').rsplit("/", 1)[-1].rsplit(".", 1)[0],
-            "img": join(BASE_URL, a.find("img").get("src", "").strip("/")),
+            "id": a.get("href", '').strip('/').rsplit('/', 1)[-1].rsplit('.', 1)[0],
+            "img": join(BASE_URL, a.find("img").get("src", "").strip('/')),
             "description": a.find("div", {"class": "pr-desc"}).text,
             "version": a.find("div", {"class": "pr-desc2"}).text,
             "title": a.find("div", {"class": "pr-title"}).text,
             "href": a.get("href", ''),
         })
 
-    attachment_a = bs.find("a", {"class": "attachmentfile"})
+    attachment_a = bs.find('a', {"class": "attachmentfile"})
     attachment = {
         "href": "",
         "text": ""
@@ -101,8 +101,8 @@ def download_info(wf, _id):
     }
 
     res = {
-        "website": bd.find("div", {"class": "gamefulltitle"}).find("a").get("href", ""),
-        "views": int(bs.find("div", {"class": "viewsnews"}).text.replace(" ", "")),
+        "website": bd.find("div", {"class": "gamefulltitle"}).find('a').get("href", ""),
+        "views": int(bs.find("div", {"class": "viewsnews"}).text.replace(' ', "")),
         "short_description": bs.find("div", {"class": "gameposterfull"}).text,
         "description": bd.find("div", {"class": "gamefullglav"}).text,
         "last_update": bs.find("div", {"class": "calendarnews"}).text,
@@ -131,13 +131,13 @@ def download_info_game(wf, _id):
     bi = bs.find("div", {"class": "gameinfo"})
     # print(bi)
     for punkt in bi.findAll("div", {"class": "punkt"}):
-        info[punkt.find("span").text] = punkt.find("p").text
+        info[punkt.find("span").text] = punkt.find('p').text
     for punkt in bi.findAll("div", {"class": "punktscor"}):
         info[punkt.find("span").text] = punkt.find("div", {"class": "scora"}).text
 
     categories = {}
-    for a in bs.find("div", {"class": "gameposterlink"}).findAll("a"):
-        categories[a.get('href', '').strip("/").rsplit("/", 1)[-1]] = a.text
+    for a in bs.find("div", {"class": "gameposterlink"}).findAll('a'):
+        categories[a.get('href', '').strip('/').rsplit('/', 1)[-1]] = a.text
 
     # pprint(info)
     # pprint(categories)
@@ -147,17 +147,17 @@ def download_info_game(wf, _id):
 
     similar = []
     for li in bp.findAll("li", {"class": "games-item"}):
-        a = li.find("a")
+        a = li.find('a')
         text = li.find("div", {"class": "games-text"})
         similar.append({
-            "id": a.get("href", '').strip('/').rsplit("/", 1)[-1].rsplit(".", 1)[0],
-            "img": join(BASE_URL, a.find("img").get("src", "").strip("/")),
+            "id": a.get("href", '').strip('/').rsplit('/', 1)[-1].rsplit('.', 1)[0],
+            "img": join(BASE_URL, a.find("img").get("src", "").strip('/')),
             "description": text.find("div", {"class": "games-desc"}).text,
             "title": text.find("div", {"class": "games-title"}).text,
             "href": a.get("href", ''),
         })
 
-    attachment_a = bs.find("a", {"class": "attachmentfile"})
+    attachment_a = bs.find('a', {"class": "attachmentfile"})
     attachment = {
         "href": "",
         "text": ""
@@ -167,8 +167,8 @@ def download_info_game(wf, _id):
     }
 
     res = {
-        "website": bd.find("div", {"class": "gamefulltitle"}).find("a").get("href", ""),
-        "views": int(bs.find("div", {"class": "viewsnews"}).text.replace(" ", "")),
+        "website": bd.find("div", {"class": "gamefulltitle"}).find('a').get("href", ""),
+        "views": int(bs.find("div", {"class": "viewsnews"}).text.replace(' ', "")),
         "short_description": bs.find("div", {"class": "gameposterfull"}).text,
         "description": bd.find("div", {"class": "gamefullglav"}).text,
         "last_update": bs.find("div", {"class": "calendarnews"}).text,

@@ -22,7 +22,7 @@ for icon in icons:
             os.makedirs(ICONS_DIR)
 
         ext = src.rsplit('.', 1)[-1]
-        name = page.url.strip("/").rsplit("/", 1)[-1]
+        name = page.url.strip('/').rsplit('/', 1)[-1]
         p = join(ICONS_DIR, name + '.' + ext)
 
         icon_data = get(src)

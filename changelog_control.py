@@ -120,7 +120,7 @@ class RE(object):
     TAG = re.compile(
         r"v?(?P<ver>"
         r"(?P<maj>\d+)\.(?P<min>\d+)\.(?P<patch>\d+)"
-        r")"
+        r')'
         r"(?:-(?P<pre>[0-9A-Za-z-]+))?"
         r"(?:\+(?P<build>[0-9A-Za-z-]))?"
     )
@@ -270,7 +270,7 @@ def new_release(tag):
     }
     release_body = '\n'.join(generate_tag_version(tag).splitlines()[1:])
 
-    with open("release.txt", "w") as release_file:
+    with open("release.txt", 'w') as release_file:
         release_file.write(release_body)
 
     print "ADDED NEW RELEASE IN CHANGELOG: %s" % tag
@@ -311,7 +311,7 @@ def save_changelog():
 
     # Save Changelog
     # print changelog_string
-    with open(CHANGELOG_FILENAME, "w") as cl:
+    with open(CHANGELOG_FILENAME, 'w') as cl:
         cl.write(changelog_string)
 
     changed = "\tmodified:   " + CHANGELOG_FILENAME in subprocess.check_output("git status", shell=True)
@@ -340,7 +340,7 @@ if __name__ == '__main__':
             DOMAIN + "/repos/%s/%s/commits" % (CHANGELOG['user'], CHANGELOG['repo'])
         )).read().decode("UTF-8"))[0]
 
-    with open(".temp.txt", "w") as temp:
+    with open(".temp.txt", 'w') as temp:
         temp.write(commit_data['commit']['message'])
 
     check_commit(".temp.txt")

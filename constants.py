@@ -22,12 +22,12 @@ SEARCH_DOT_SELECTED = "️⬛️"
 SEARCH_LENGTH = 5
 
 LOADING_BRAILLE = [
-    "⠧",
-    "⠏",
-    "⠛",
-    "⠹",
-    "⠼",
-    "⠶"
+    '⠧',
+    '⠏',
+    '⠛',
+    '⠹',
+    '⠼',
+    '⠶'
 ]
 
 EMOJI_DIR = join(curdir, "icons")
@@ -50,11 +50,11 @@ GAMES = "games"
 
 PREFIXES = {
     "id": "id",
-    "p": PROGRAMS,
-    "g": GAMES,
-    "s": "FORCE_SEARCH"
+    'p': PROGRAMS,
+    'g': GAMES,
+    's': "FORCE_SEARCH"
 }
-PREFIX_SYMBOL_END = ":"
+PREFIX_SYMBOL_END = ':'
 
 LIBRARIES = [
     "./lib",
@@ -75,7 +75,7 @@ def get_var_boolean(key, default=False):
     a = get_var(key, default)
     if not a:
         return default
-    return a in ("yes", "on", "1", "true", True)
+    return a in ("yes", "on", '1', "true", True)
 
 
 def get_var(key, default=None):
@@ -91,13 +91,22 @@ def set_var(key, value):
 
 def set_var_boolean(key, value):
     # type: (Str, bool or Str) -> None
-    return set_var(key, value in ("yes", "on", "1", "true", True))
+    return set_var(key, value in ("yes", "on", '1', "true", True))
+
+
+def word_with_number(number):
+    # type: (int) -> Str
+    if number % 10 == 1:
+        return 'а'
+    if number % 10 in range(2, 5):
+        return 'ы'
+    return ''
 
 
 class Workflow(Workflow3):
     def __init__(self, **kwargs):
         Workflow3.__init__(self, **kwargs)
-        self.magic_prefix = "S" + PREFIX_SYMBOL_END
+        self.magic_prefix = 'S' + PREFIX_SYMBOL_END
 
     def get_background_data(self, name, data_func=None, max_age=0, task=None, args=None,
                             rerun_item=None, rerun=0.1):
@@ -127,7 +136,7 @@ class Workflow(Workflow3):
 
         if is_running(name):
             if rerun_item and "title" in rerun_item:
-                lt = get_var("LOADING_TYPE", "0")
+                lt = get_var("LOADING_TYPE", '0')
                 lt = int(lt) if lt.isdigit() else 0
                 lt = lt if lt in range(len(LOADINGS)) else 0
                 rerun_item["subtitle"] = LOADINGS[lt](self)

@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 
 import sys
-from pprint import pprint
 
 from constants import *
 from workflow import ICON_ERROR, ICON_WEB, ICON_INFO
@@ -12,11 +11,11 @@ __version__ = 'v0.1.0'
 
 
 def _filter(data):
-    return " ".join(filter(bool, (data.get(i, "") for i in (
-            "title",
-            "description",
-            "id",
-        ))))
+    return ' '.join(filter(bool, (data.get(i, '') for i in (
+        "title",
+        "description",
+        "id",
+    ))))
 
 
 @add_to_loading
@@ -40,7 +39,7 @@ def get_loading_braille(wf):
 
 def main(wf):
     # type: (Workflow) -> None
-    query = " ".join(wf.args)
+    query = ' '.join(wf.args)
     prefixes = []
 
     if PREFIX_SYMBOL_END in query:
@@ -106,12 +105,12 @@ def main(wf):
         for key, func in args:
             wf.add_item(
                 title=key,
-                subtitle=wf.magic_prefix+key,
-                autocomplete=wf.magic_prefix+key,
+                subtitle=wf.magic_prefix + key,
+                autocomplete=wf.magic_prefix + key,
                 icon=ICON_GEAR,
             )
 
-    if "p" in prefixes:
+    if 'p' in prefixes:
         programs = wf.get_background_data(PROGRAMS, max_age=MAX_AGE, rerun_item=dict(
             title="Поиск по программам",
             autocomplete="p:",
@@ -222,9 +221,7 @@ def main(wf):
                 title="Поиск по программам",
                 subtitle='Найдено %s программ%s' % (
                     c if len(dat) == c else "%s из %s" % (len(dat), c),
-                    'a' if c % 10 == 1 else (
-                        'ы' if c % 10 in range(2, 5) else ''
-                    )
+                    word_with_number(c)
                 ),
                 icon=ICON_TECHNOLOGIST,
                 autocomplete="p:"
@@ -256,7 +253,7 @@ def main(wf):
                 )
                 # wf.rerun = 2
 
-    if "g" in prefixes:
+    if 'g' in prefixes:
         games = wf.get_background_data(GAMES, max_age=MAX_AGE, rerun_item=dict(
             title="Поиск по играм",
             autocomplete="g:",
@@ -280,11 +277,12 @@ def main(wf):
                 icon = wf.cached_data(item['id'], None, 0)
                 _id = item["id"]
 
-                data = wf.get_background_data("info_" + _id, max_age=MAX_AGE, args=[_id], task="info-game", rerun_item=dict(
-                    title='Получение данных об игре "%s"' % item['title'],
-                    icon=icon,
-                    autocomplete="gid:" + _id
-                ))
+                data = wf.get_background_data("info_" + _id, max_age=MAX_AGE, args=[_id], task="info-game",
+                                              rerun_item=dict(
+                                                  title='Получение данных об игре "%s"' % item['title'],
+                                                  icon=icon,
+                                                  autocomplete="gid:" + _id
+                                              ))
 
                 if data is not None:
                     wf.add_item(
@@ -367,9 +365,7 @@ def main(wf):
                 title="Поиск по играм",
                 subtitle='Найдено %s игр%s' % (
                     c if len(dat) == c else "%s из %s" % (len(dat), c),
-                    'a' if c % 10 == 1 else (
-                        'ы' if c % 10 in range(2, 5) else ''
-                    )
+                    word_with_number(c)
                 ),
                 icon=ICON_VIDEO_GAME,
                 autocomplete="g:"
@@ -402,10 +398,29 @@ def main(wf):
                 # wf.rerun = 2
 
     elif not wf._items:
+        cache_pr = wf.cached_data(PROGRAMS, None, 0)
+        cache_game = wf.cached_data(GAMES, None, 0)
+
+        count_pr = "Программы ещё не загружены..." if cache_pr is None else \
+            "Всего загружено %s программ%s" % (cache_pr["data"]["count"], word_with_number(cache_pr["data"]["count"]))
+        count_game = "Игры ещё не загружены..." if cache_game is None else \
+            "Всего загружено %s игр%s" % (cache_game["data"]["count"], word_with_number(cache_game["data"]["count"]))
+
         wf.add_item(
-            title="Наверное, это ещё не работает...",
-            subtitle="Напишите мне об этом!",
-            arg="https://vk.com/im?sel=173996641"
+            title='Найти "%s" в программах' % query,
+            subtitle=count_pr,
+            arg="p:" + query,
+            autocomplete="p:" + query,
+            valid=False,
+            icon=ICON_TECHNOLOGIST,
+        )
+        wf.add_item(
+            title='Найти "%s" в играх' % query,
+            subtitle=count_game,
+            arg="g:" + query,
+            autocomplete="g:" + query,
+            valid=False,
+            icon=ICON_VIDEO_GAME,
         )
 
     if get_var_boolean("DEBUG"):

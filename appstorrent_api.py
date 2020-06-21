@@ -48,9 +48,9 @@ def get_navigation(bs=None):
 
     navigations = []
     navigations_dict = {}
-    for a in bs.find("div", {"class": "list-group2"}).findAll("a"):  # type: Tag
+    for a in bs.find("div", {"class": "list-group2"}).findAll('a'):  # type: Tag
         name, count = list(a.stripped_strings)
-        href = a.get("href", "/").lstrip("/")
+        href = a.get("href", '/').lstrip('/')
         if href in FILTER:
             navigations.append({
                 "name": name,
@@ -159,11 +159,11 @@ def constructor(name, attrs, selector_func, _href=''):
 
 FILTER = {
     "programs": constructor(
-        "a",
+        'a',
         {"class": "pr-itema"},
         lambda a: {
             "href": a.get("href", ""),
-            "id": a.get("href", "").rsplit("/", 1)[-1].rsplit(".", 1)[0],
+            "id": a.get("href", "").rsplit('/', 1)[-1].rsplit('.', 1)[0],
             "img": join(BASE_URL, a.find("img", {"class": "program-icon"}).get("src").strip('/')),
             "title": a.find("div", {"class": "pr-title"}).text,
             "description": a.find("div", {"class": "pr-desc"}).text,
@@ -175,8 +175,8 @@ FILTER = {
         "li",
         {"class": "games-item"},
         lambda li: {
-            "href": li.find("a").get("href", ""),
-            "id": li.find("a").get("href", "").rsplit("/", 1)[-1].rsplit(".", 1)[0],
+            "href": li.find('a').get("href", ""),
+            "id": li.find('a').get("href", "").rsplit('/', 1)[-1].rsplit('.', 1)[0],
             "img": join(BASE_URL, li.find("img", {"class": "games-icon"}).get("src").strip('/')),
             "title": li.find("div", {"class": "games-title"}).text,
             "description": ' '.join(filter(bool, li.find("div", {"class": "games-desc"}).text.split())),
