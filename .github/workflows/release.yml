@@ -1,4 +1,4 @@
-name: "Alfred-Workflow-Release"
+name: "Alfred Workflow Release Creator"
 
 on:
   push

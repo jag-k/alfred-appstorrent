@@ -1,4 +1,4 @@
-name: "Changelog-from-commit-message"
+name: "Changelog From Commit Message"
 
 on:
   push
