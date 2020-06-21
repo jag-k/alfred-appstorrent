@@ -211,7 +211,7 @@ def check_commit(file_path):
                 if not msg.endswith(':'):
                     UNRELEASED.setdefault(state, [])
                     line = msg[len(act):].strip().strip('.')
-                    print "ADDED '%r'\tIN '%r'" % (line, state)
+                    print "ADDED %r\tIN %r" % (line[1:], state[1:])
                     UNRELEASED[state].append(line)
                     state = None
                 continue
