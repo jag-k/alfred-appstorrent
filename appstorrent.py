@@ -2,6 +2,7 @@
 # encoding: utf-8
 from __future__ import unicode_literals
 
+import re
 import sys
 
 from constants import *
@@ -398,13 +399,24 @@ def main(wf):
                 # wf.rerun = 2
 
     elif not wf._items:
-        cache_pr = wf.cached_data(PROGRAMS, None, 0)
-        cache_game = wf.cached_data(GAMES, None, 0)
+        is_id = re.match(r"\d+-[a-z\-]+", query) is not None
+        cache_pr = wf.cached_data(PROGRAMS, None, MAX_AGE)
+        cache_game = wf.cached_data(GAMES, None, MAX_AGE)
 
         count_pr = "Программы ещё не загружены..." if cache_pr is None else \
             "Всего загружено %s программ%s" % (cache_pr["data"]["count"], word_with_number(cache_pr["data"]["count"]))
         count_game = "Игры ещё не загружены..." if cache_game is None else \
             "Всего загружено %s игр%s" % (cache_game["data"]["count"], word_with_number(cache_game["data"]["count"]))
+
+        if is_id:
+            wf.add_item(
+                title='Найти "%s" в программах по ID' % query,
+                subtitle=count_pr,
+                arg="pid:" + query,
+                autocomplete="pid:" + query,
+                valid=False,
+                icon=ICON_TECHNOLOGIST,
+            )
 
         wf.add_item(
             title='Найти "%s" в программах' % query,
@@ -414,6 +426,17 @@ def main(wf):
             valid=False,
             icon=ICON_TECHNOLOGIST,
         )
+
+        if is_id:
+            wf.add_item(
+                title='Найти "%s" в играх по ID' % query,
+                subtitle=count_game,
+                arg="gid:" + query,
+                autocomplete="gid:" + query,
+                valid=False,
+                icon=ICON_VIDEO_GAME,
+            )
+
         wf.add_item(
             title='Найти "%s" в играх' % query,
             subtitle=count_game,
