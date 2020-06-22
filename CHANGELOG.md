@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
  - Fast search 🔎.
+ - :mag: fast find by id.
 
 ### Fixed
  - Building files.
