@@ -8,7 +8,7 @@ import sys
 from constants import *
 from workflow import ICON_ERROR, ICON_WEB, ICON_INFO
 
-__version__ = 'v0.1.0'
+__version__ = 'v0.1.1'
 
 
 def _filter(data):
