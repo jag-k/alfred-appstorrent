@@ -1,7 +1,9 @@
 name: "Alfred Workflow Release Creator"
 
 on:
-  push
+  push:
+    branches: 
+      - master
 
 env:
   WORKFLOW_FILE: "AppStorrent.alfredworkflow"
