@@ -1,11 +1,11 @@
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 
 from io import open
 import os
 import subprocess
 from zipfile import ZipFile
 from plistlib import readPlist, writePlist
-from appstorrent import __version__
+from main import __version__
 from traceback import print_exc
 
 DEFAULT_PLIST = "info.plist"
@@ -29,10 +29,13 @@ def update_plist(plist_file_or_path=None):
                 plist['readme'] = '\n'.join(readme_lines)
                 plist['name'] = name
 
+        for key in plist.get("variablesdontexport", []):
+            plist["variables"][key] = ""
+
         writePlist(plist, plist_file_or_path)
     except Exception as err:
         print_exc()
-        print "%s: %s" % (type(err).__name__, err)
+        print("%s: %s" % (type(err).__name__, err))
         return 1
     return 0
 
@@ -57,8 +60,8 @@ def build(filename, plist_file_or_path=None):
         for f in list_of_files:
             z.write(f)
 
-    print "::set-env name=TAG::" + __version__
-    print "::set-env name=PRERELEASE::%s" % str('-' in __version__).lower()
+    print("::set-env name=TAG::" + __version__)
+    print("::set-env name=PRERELEASE::%s" % str('-' in __version__).lower())
     return filename
 
 
