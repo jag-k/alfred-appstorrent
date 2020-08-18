@@ -31,19 +31,21 @@ import time
 # "com.runningwithcrayons.Alfred" depending on version.
 #
 # Open Alfred in search (regular) mode
-JXA_SEARCH = "Application({app}).search({arg});"
+JXA_SEARCH = 'Application({app}).search({arg});'
 # Open Alfred's File Actions on an argument
-JXA_ACTION = "Application({app}).action({arg});"
+JXA_ACTION = 'Application({app}).action({arg});'
 # Open Alfred's navigation mode at path
-JXA_BROWSE = "Application({app}).browse({arg});"
+JXA_BROWSE = 'Application({app}).browse({arg});'
 # Set the specified theme
-JXA_SET_THEME = "Application({app}).setTheme({arg});"
+JXA_SET_THEME = 'Application({app}).setTheme({arg});'
 # Call an External Trigger
-JXA_TRIGGER = "Application({app}).runTrigger({arg}, {opts});"
+JXA_TRIGGER = 'Application({app}).runTrigger({arg}, {opts});'
 # Save a variable to the workflow configuration sheet/info.plist
-JXA_SET_CONFIG = "Application({app}).setConfiguration({arg}, {opts});"
+JXA_SET_CONFIG = 'Application({app}).setConfiguration({arg}, {opts});'
 # Delete a variable from the workflow configuration sheet/info.plist
-JXA_UNSET_CONFIG = "Application({app}).removeConfiguration({arg}, {opts});"
+JXA_UNSET_CONFIG = 'Application({app}).removeConfiguration({arg}, {opts});'
+# Tell Alfred to reload a workflow from disk
+JXA_RELOAD_WORKFLOW = 'Application({app}).reloadWorkflow({arg});'
 
 
 class AcquisitionError(Exception):
@@ -100,7 +102,7 @@ def unicodify(s, encoding='utf-8', norm=None):
     to form ``norm`` if specified.
 
     Args:
-        s (str, unicode): String to decode. May also be Unicode.
+        s (str): String to decode. May also be Unicode.
         encoding (str, optional): Encoding to use on bytestrings.
         norm (None, optional): Normalisation form to apply to Unicode string.
 
@@ -148,17 +150,16 @@ def applescriptify(s):
     .. versionadded:: 1.31
 
     Replaces ``"`` with `"& quote &"`. Use this function if you want
-
     to insert a string into an AppleScript script:
-        >>> query = 'g "python" test'
-        >>> applescriptify(query)
+
+        >>> applescriptify('g "python" test')
         'g " & quote & "python" & quote & "test'
 
     Args:
         s (unicode): Unicode string to escape.
 
     Returns:
-        unicode: Escaped string
+        unicode: Escaped string.
 
     """
     return s.replace(u'"', u'" & quote & "')
@@ -173,11 +174,11 @@ def run_command(cmd, **kwargs):
     all arguments are encoded to UTF-8 first.
 
     Args:
-        cmd (list): Command arguments to pass to ``check_output``.
-        **kwargs: Keyword arguments to pass to ``check_output``.
+        cmd (list): Command arguments to pass to :func:`~subprocess.check_output`.
+        **kwargs: Keyword arguments to pass to :func:`~subprocess.check_output`.
 
     Returns:
-        str: Output returned by ``check_output``.
+        str: Output returned by :func:`~subprocess.check_output`.
 
     """
     cmd = [utf8ify(s) for s in cmd]
@@ -197,6 +198,7 @@ def run_applescript(script, *args, **kwargs):
         script (str, optional): Filepath of script or code to run.
         *args: Optional command-line arguments to pass to the script.
         **kwargs: Pass ``lang`` to run a language other than AppleScript.
+            Any other keyword arguments are passed to :func:`run_command`.
 
     Returns:
         str: Output of run command.
@@ -227,7 +229,7 @@ def run_jxa(script, *args):
     Wrapper around :func:`run_applescript` that passes ``lang=JavaScript``.
 
     Args:
-        script (str, unicode): Filepath of script or code to run.
+        script (str): Filepath of script or code to run.
         *args: Optional command-line arguments to pass to script.
 
     Returns:
@@ -242,11 +244,11 @@ def run_trigger(name, bundleid=None, arg=None):
 
     .. versionadded:: 1.31
 
-    If ``bundleid`` is not specified, reads the bundle ID of the current
-    workflow from Alfred's environment variables.
+    If ``bundleid`` is not specified, the bundle ID of the calling
+    workflow is used.
 
     Args:
-        name (str, unicode): Name of External Trigger to call.
+        name (str): Name of External Trigger to call.
         bundleid (str, optional): Bundle ID of workflow trigger belongs to.
         arg (str, optional): Argument to pass to trigger.
 
@@ -264,14 +266,32 @@ def run_trigger(name, bundleid=None, arg=None):
     run_applescript(script, lang='JavaScript')
 
 
+def set_theme(theme_name):
+    """Change Alfred's theme.
+
+    .. versionadded:: 1.39.0
+
+    Args:
+        theme_name (unicode): Name of theme Alfred should use.
+
+    """
+    appname = jxa_app_name()
+    script = JXA_SET_THEME.format(app=json.dumps(appname),
+                                  arg=json.dumps(theme_name))
+    run_applescript(script, lang='JavaScript')
+
+
 def set_config(name, value, bundleid=None, exportable=False):
     """Set a workflow variable in ``info.plist``.
 
     .. versionadded:: 1.33
 
+    If ``bundleid`` is not specified, the bundle ID of the calling
+    workflow is used.
+
     Args:
-        name (str, unicode): Name of variable to set.
-        value (str, unicode): Value to set variable to.
+        name (str): Name of variable to set.
+        value (str): Value to set variable to.
         bundleid (str, optional): Bundle ID of workflow variable belongs to.
         exportable (bool, optional): Whether variable should be marked
             as exportable (Don't Export checkbox).
@@ -297,8 +317,11 @@ def unset_config(name, bundleid=None):
 
     .. versionadded:: 1.33
 
+    If ``bundleid`` is not specified, the bundle ID of the calling
+    workflow is used.
+
     Args:
-        name (str, unicode): Name of variable to delete.
+        name (str): Name of variable to delete.
         bundleid (str, optional): Bundle ID of workflow variable belongs to.
 
     """
@@ -313,23 +336,92 @@ def unset_config(name, bundleid=None):
     run_applescript(script, lang='JavaScript')
 
 
+def search_in_alfred(query=None):
+    """Open Alfred with given search query.
+
+    .. versionadded:: 1.39.0
+
+    Omit ``query`` to simply open Alfred's main window.
+
+    Args:
+        query (unicode, optional): Search query.
+
+    """
+    query = query or u''
+    appname = jxa_app_name()
+    script = JXA_SEARCH.format(app=json.dumps(appname), arg=json.dumps(query))
+    run_applescript(script, lang='JavaScript')
+
+
+def browse_in_alfred(path):
+    """Open Alfred's filesystem navigation mode at ``path``.
+
+    .. versionadded:: 1.39.0
+
+    Args:
+        path (unicode): File or directory path.
+
+    """
+    appname = jxa_app_name()
+    script = JXA_BROWSE.format(app=json.dumps(appname), arg=json.dumps(path))
+    run_applescript(script, lang='JavaScript')
+
+
+def action_in_alfred(paths):
+    """Action the give filepaths in Alfred.
+
+    .. versionadded:: 1.39.0
+
+    Args:
+        paths (list): Unicode paths to files/directories to action.
+
+    """
+    appname = jxa_app_name()
+    script = JXA_ACTION.format(app=json.dumps(appname), arg=json.dumps(paths))
+    run_applescript(script, lang='JavaScript')
+
+
+def reload_workflow(bundleid=None):
+    """Tell Alfred to reload a workflow from disk.
+
+    .. versionadded:: 1.39.0
+
+    If ``bundleid`` is not specified, the bundle ID of the calling
+    workflow is used.
+
+    Args:
+        bundleid (unicode, optional): Bundle ID of workflow to reload.
+
+    """
+    bundleid = bundleid or os.getenv('alfred_workflow_bundleid')
+    appname = jxa_app_name()
+    script = JXA_RELOAD_WORKFLOW.format(app=json.dumps(appname),
+                                        arg=json.dumps(bundleid))
+
+    run_applescript(script, lang='JavaScript')
+
+
 def appinfo(name):
     """Get information about an installed application.
 
     .. versionadded:: 1.31
 
     Args:
-        name (str, unicode): Name of application to look up.
+        name (str): Name of application to look up.
 
     Returns:
         AppInfo: :class:`AppInfo` tuple or ``None`` if app isn't found.
 
     """
-    cmd = ['mdfind', '-onlyin', '/Applications',
-           '-onlyin', os.path.expanduser('~/Applications'),
-           '(kMDItemContentTypeTree == com.apple.application &&'
-           '(kMDItemDisplayName == "{0}" || kMDItemFSName == "{0}.app"))'
-           .format(name)]
+    cmd = [
+        'mdfind',
+        '-onlyin', '/Applications',
+        '-onlyin', '/System/Applications',
+        '-onlyin', os.path.expanduser('~/Applications'),
+        '(kMDItemContentTypeTree == com.apple.application &&'
+        '(kMDItemDisplayName == "{0}" || kMDItemFSName == "{0}.app"))'
+        .format(name)
+    ]
 
     output = run_command(cmd).strip()
     if not output:

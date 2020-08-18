@@ -87,7 +87,7 @@ def _job_pid(name):
     """Get PID of job or `None` if job does not exist.
 
     Args:
-        name (str, unicode): Name of job.
+        name (str): Name of job.
 
     Returns:
         int: PID of job process (or `None` if job doesn't exist).
@@ -102,10 +102,7 @@ def _job_pid(name):
         if _process_exists(pid):
             return pid
 
-    try:
-        os.unlink(pidfile)
-    except Exception:  # pragma: no cover
-        pass
+    os.unlink(pidfile)
 
 
 def is_running(name):
@@ -182,7 +179,7 @@ def kill(name, sig=signal.SIGTERM):
     .. versionadded:: 1.29
 
     Args:
-        name (str, unicode): Name of the job
+        name (str): Name of the job
         sig (int, optional): Signal to send (default: SIGTERM)
 
     Returns:

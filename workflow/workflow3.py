@@ -604,7 +604,7 @@ class Workflow3(Workflow):
         .. versionadded:: 1.25
 
         Args:
-            name (str, unicode): Cache key
+            name (str): Cache key
             data (object): Data to cache
             session (bool, optional): Whether to scope the cache
                 to the current session.
@@ -628,7 +628,7 @@ class Workflow3(Workflow):
         .. versionadded:: 1.25
 
         Args:
-            name (str, unicode): Cache key
+            name (str): Cache key
             data_func (callable): Callable that returns fresh data. It
                 is called if the cache has expired or doesn't exist.
             max_age (int): Maximum allowable age of cache in seconds.
@@ -717,5 +717,8 @@ class Workflow3(Workflow):
 
     def send_feedback(self):
         """Print stored items to console/Alfred as JSON."""
-        json.dump(self.obj, sys.stdout)
+        if self.debugging:
+            json.dump(self.obj, sys.stdout, indent=2, separators=(',', ': '))
+        else:
+            json.dump(self.obj, sys.stdout)
         sys.stdout.flush()

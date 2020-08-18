@@ -58,8 +58,8 @@ class Download(object):
     .. versionadded: 1.37
 
     Attributes:
-        url (str, unicode): URL of workflow file.
-        filename (str, unicode): Filename of workflow file.
+        url (str): URL of workflow file.
+        filename (str): Filename of workflow file.
         version (Version): Semantic version of workflow.
         prerelease (bool): Whether version is a pre-release.
         alfred_version (Version): Minimum compatible version
@@ -87,7 +87,7 @@ class Download(object):
         extension are rejected as ambiguous.
 
         Args:
-            js (str, unicode): JSON response from GitHub's releases endpoint.
+            js (str): JSON response from GitHub's releases endpoint.
 
         Returns:
             list: Sequence of `Download`.
@@ -136,8 +136,8 @@ class Download(object):
         """Create a new Download.
 
         Args:
-            url (str, unicode): URL of workflow file.
-            filename (str, unicode): Filename of workflow file.
+            url (str): URL of workflow file.
+            filename (str): Filename of workflow file.
             version (Version): Version of workflow.
             prerelease (bool, optional): Whether version is
                 pre-release. Defaults to False.
@@ -222,7 +222,7 @@ class Version(object):
     """
 
     #: Match version and pre-release/build information in version strings
-    match_version = re.compile(r'([0-9\.]+)(.+)?').match
+    match_version = re.compile(r'([0-9][0-9\.]*)(.+)?').match
 
     def __init__(self, vstr):
         """Create new `Version` object.
@@ -247,7 +247,7 @@ class Version(object):
         else:
             m = self.match_version(vstr)
         if not m:
-            raise ValueError('invalid version number: {!r}'.format(vstr))
+            raise ValueError('invalid version number: ' + vstr)
 
         version, suffix = m.groups()
         parts = self._parse_dotted_string(version)
@@ -257,7 +257,7 @@ class Version(object):
         if len(parts):
             self.patch = parts.pop(0)
         if not len(parts) == 0:
-            raise ValueError('version number too long: {!r}'.format(vstr))
+            raise ValueError('version number too long: ' + vstr)
 
         if suffix:
             # Build info
@@ -268,10 +268,8 @@ class Version(object):
             if suffix:
                 if not suffix.startswith('-'):
                     raise ValueError(
-                        'suffix must start with - : {0}'.format(suffix))
+                        'suffix must start with - : ' + suffix)
                 self.suffix = suffix[1:]
-
-        # wf().logger.debug('version str `{}` -> {}'.format(vstr, repr(self)))
 
     def _parse_dotted_string(self, s):
         """Parse string ``s`` into list of ints and strings."""
@@ -521,7 +519,7 @@ def install_update():
     path = retrieve_download(Download.from_dict(dl))
 
     wf().logger.info('installing updated workflow ...')
-    subprocess.call(['open', path])
+    subprocess.call(['open', path])  # nosec
 
     wf().cache_data(key, no_update)
     return True

@@ -117,8 +117,8 @@ def install_notifier():
     # z.extractall(destdir)
     tgz = tarfile.open(archive, 'r:gz')
     tgz.extractall(destdir)
-    assert os.path.exists(n), \
-        'Notify.app could not be installed in %s' % destdir
+    if not os.path.exists(n):  # pragma: nocover
+        raise RuntimeError('Notify.app could not be installed in ' + destdir)
 
     # Replace applet icon
     icon = notifier_icon_path()
@@ -157,7 +157,7 @@ def validate_sound(sound):
     in ``System Preferences > Sound > Sound Effects``.
 
     Args:
-        sound (str, unicode): Name of system sound.
+        sound (str): Name of system sound.
 
     Returns:
         str: Proper name of sound or ``None``.
@@ -214,8 +214,8 @@ def convert_image(inpath, outpath, size):
     """Convert an image file using ``sips``.
 
     Args:
-        inpath (str, unicode): Path of source file.
-        outpath (str, unicode): Path to destination file.
+        inpath (str): Path of source file.
+        outpath (str): Path to destination file.
         size (int): Width and height of destination image in pixels.
 
     Raises:
@@ -242,8 +242,8 @@ def png_to_icns(png_path, icns_path):
     them into a single ICNS file.
 
     Args:
-        png_path (str, unicode): Path to source PNG file.
-        icns_path (str, unicode): Path to destination ICNS file.
+        png_path (str): Path to source PNG file.
+        icns_path (str): Path to destination ICNS file.
 
     Raises:
         RuntimeError: Raised if ``iconutil`` or ``sips`` fail.
@@ -253,8 +253,9 @@ def png_to_icns(png_path, icns_path):
     try:
         iconset = os.path.join(tempdir, 'Icon.iconset')
 
-        assert not os.path.exists(iconset), \
-            'iconset already exists: ' + iconset
+        if os.path.exists(iconset):  # pragma: nocover
+            raise RuntimeError('iconset already exists: ' + iconset)
+
         os.makedirs(iconset)
 
         # Copy source icon to icon set and generate all the other
@@ -283,8 +284,9 @@ def png_to_icns(png_path, icns_path):
         if retcode != 0:
             raise RuntimeError('iconset exited with %d' % retcode)
 
-        assert os.path.exists(icns_path), \
-            'generated ICNS file not found: ' + repr(icns_path)
+        if not os.path.exists(icns_path):  # pragma: nocover
+            raise ValueError(
+                'generated ICNS file not found: ' + repr(icns_path))
     finally:
         try:
             shutil.rmtree(tempdir)
@@ -332,8 +334,8 @@ if __name__ == '__main__':  # pragma: nocover
         print('converting {0!r} to {1!r} ...'.format(o.png, icns),
               file=sys.stderr)
 
-        assert not os.path.exists(icns), \
-            'destination file already exists: ' + icns
+        if os.path.exists(icns):
+            raise ValueError('destination file already exists: ' + icns)
 
         png_to_icns(o.png, icns)
         sys.exit(0)
