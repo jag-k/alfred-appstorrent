@@ -1,3 +1,5 @@
+<img align="left" src="https://raw.githubusercontent.com/jag-k/alfred-appstorrent/master/icon.png" alt="AppStorrent" width="50px"/>
+
 # AppStorrent Alfred Workflow
 Ищите и качайте приложения и игры для MacOS
 
