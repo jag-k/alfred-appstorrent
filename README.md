@@ -10,6 +10,8 @@
 ![Alfred Workflow Release Creator](https://github.com/jag-k/alfred-appstorrent/workflows/Alfred%20Workflow%20Release%20Creator/badge.svg)
 ![Changelog-from-commit-message](https://github.com/jag-k/alfred-appstorrent/workflows/Changelog%20From%20Commit%20Message/badge.svg)
 
+![Open Collective backers and sponsors](https://img.shields.io/opencollective/all/jag_k)
+
 ## Ссылки 
  - GitHub: [@jag-k/alfred-appstorrent](https://github.com/jag-k/alfred-appstorrent)
  - Email: [jag-k58@ya.ru](mailto:jag-k58@ya.ru)
