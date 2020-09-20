@@ -2,8 +2,8 @@
 from __future__ import print_function, unicode_literals
 
 import os
-import sys
 
+from apps_update import get_versions
 from constants import *
 from workflow.web import request, get
 
@@ -12,6 +12,9 @@ from workflow.web import request, get
 def task_programs(wf):
     # type: (Workflow) -> None
     from appstorrent_api import get_data
+
+    wf.add_item("Loading")
+
     dat = wf.cached_data(PROGRAMS, lambda: get_data(
         PROGRAMS,
         sorting=wf.cached_data("sorting", None, 0)
@@ -19,7 +22,7 @@ def task_programs(wf):
 
     for i in dat['data']['items']:
         name, url = i["id"], i['img']
-        wf.get_background_data(name, None, MAX_AGE*7, "download", [name, url])
+        wf.get_background_data(name, None, MAX_AGE * 7, "download", [name, url])
 
 
 @Task(GAMES)
@@ -33,16 +36,16 @@ def task_games(wf):
 
     for i in dat['data']['items']:
         name, url = i["id"], i['img']
-        wf.get_background_data(name, None, MAX_AGE*7, "download", [name, url])
+        wf.get_background_data(name, None, MAX_AGE * 7, "download", [name, url])
 
 
 @Task("download")
 def download_img(wf, name, url):
     # type: (Workflow, Str, Str) -> Str
     ext = url.rsplit('.', 1)[-1]
-    img_name = os.path.abspath(join(ICON_DIR, "%s.%s" % (name, ext)))
-    if not (os.path.exists(ICON_DIR) and os.path.isdir(ICON_DIR)):
-        os.makedirs(ICON_DIR)
+    img_name = os.path.abspath(join(Icon.DIR, "%s.%s" % (name, ext)))
+    if not (os.path.exists(Icon.DIR) and os.path.isdir(Icon.DIR)):
+        os.makedirs(Icon.DIR)
     if not os.path.exists(img_name):
         d = request('get', url).raw
         with open(img_name, 'wb') as img:
@@ -183,6 +186,14 @@ def download_info_game(wf, _id):
     return res
 
 
+@Task(UPDATES)
+def check_update(wf):
+    # type: (Workflow) -> list
+    data = get_versions()
+    wf.cached_data(UPDATES, lambda: data, MAX_AGE)
+    return data
+
+
 def main(wf):  # type: (Workflow) -> None or int
     query = wf.args
     Task.wf = wf
@@ -190,7 +201,12 @@ def main(wf):  # type: (Workflow) -> None or int
     try:
         wf.logger.warning("Start task: %s", "; ".join(query))
         Task.run(*query)
+
+    except BaseException as err:
+        wf.logger.errsor("%s: %s", type(err).__name__, err)
+
     finally:
+        wf.logger.info("Finally task: %s", "; ".join(query))
         wf.send_feedback()
 
 

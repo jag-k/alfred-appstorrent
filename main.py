@@ -2,13 +2,18 @@
 # encoding: utf-8
 from __future__ import unicode_literals
 
+import json
 import re
 import sys
+from os.path import exists
 
 from constants import *
-from workflow import ICON_ERROR, ICON_WEB, ICON_INFO
+
+from io import open
 
 __version__ = 'v0.1.1'
+
+from workflow import web
 
 
 def _filter(data):
@@ -40,6 +45,8 @@ def get_loading_braille(wf):
 
 def main(wf):
     # type: (Workflow) -> None
+    from packaging import version
+
     query = ' '.join(wf.args)
     prefixes = []
 
@@ -58,27 +65,27 @@ def main(wf):
             title="Программы",
             subtitle='Введите префикс `p:` для поиска',
             autocomplete="p:",
-            icon=ICON_TECHNOLOGIST,
+            icon=Icon.TECHNOLOGIST,
         )
         wf.add_item(
             title="Игры",
             subtitle='Введите префикс `g:` для поиска',
             autocomplete="g:",
-            icon=ICON_VIDEO_GAME,
+            icon=Icon.VIDEO_GAME,
         )
         wf.add_item(
             title="Или используйте поиск самого сайта",
             subtitle='Введите префикс `s:` для поиска ⚠️ МОЖЕТ РАБОТАТЬ МЕДЛЕННО ⚠️',
             autocomplete="s:",
-            icon=ICON_MAGNIFYING_GLASS_TILTED_LEFT,
+            icon=Icon.MAGNIFYING_GLASS_TILTED_LEFT,
         )
         wf.add_item(
             title="Настройки Workflow",
-            subtitle="Введите `%s` для показа %d пуниктов настроек" % (
+            subtitle="Введите `%s` для показа %d пунктов настроек" % (
                 wf.magic_prefix,
                 len(wf.magic_arguments)
             ),
-            icon=ICON_GEAR,
+            icon=Icon.GEAR,
             autocomplete=wf.magic_prefix
         )
         if get_var_boolean("DEBUG"):
@@ -99,7 +106,7 @@ def main(wf):
                     len(args), l
                 )
             ),
-            icon=ICON_GEAR,
+            icon=Icon.GEAR,
             autocomplete=wf.magic_prefix
         )
 
@@ -108,18 +115,92 @@ def main(wf):
                 title=key,
                 subtitle=wf.magic_prefix + key,
                 autocomplete=wf.magic_prefix + key,
-                icon=ICON_GEAR,
+                icon=Icon.GEAR,
             )
 
     if 'p' in prefixes:
+
+        log.info("================================================ PROGRAMS")
+
         programs = wf.get_background_data(PROGRAMS, max_age=MAX_AGE, rerun_item=dict(
             title="Поиск по программам",
             autocomplete="p:",
-            icon=ICON_TECHNOLOGIST,
+            icon=Icon.TECHNOLOGIST,
         ))
 
         if programs is None:
             log.debug("Programs loading...")
+
+        elif "u" in prefixes:
+            updates = wf.get_background_data(UPDATES, max_age=8, rerun_item=dict(
+                title="Проверка обновления программ",
+                autocomplete="pu:",
+                icon=Icon.TECHNOLOGIST,
+            ))
+
+            if updates is None:
+                log.debug("Updates loading...")
+
+            else:
+                up = {i["name"]: i["version"] for i in updates}
+
+                have_update = dict(
+                    filter(
+                        lambda (key_d, value): key_d in map(
+                            lambda x: x['title'],
+                            programs['data']['items']
+                        ),
+                        up.items()
+                    )
+                )
+                dat = wf.filter(
+                    query,
+                    filter(
+                        lambda x: x['title'] in up and
+                        version.parse(x['version']) <= version.parse(up[x['title']]),
+                        programs['data']['items']
+                    ),
+                    _filter
+                )
+                wf.add_item(
+                    title="Поиск по программам",
+                    subtitle='Найдено %s программ%s' % (
+                        len(dat),
+                        word_with_number(len(dat))
+                    ),
+                    icon=Icon.TECHNOLOGIST,
+                    autocomplete="pu:"
+                )
+
+                for item in dat:
+                    icon = wf.cached_data(item['id'], None, 0)
+                    if icon is None or not exists(icon):
+                        icon = Icon.PROGRAM
+                    i = wf.add_item(
+                        title=item['title'],
+                        subtitle="(↹ для доп. информации) %s  ●  %s → %s" % (
+                            item["description"],
+                            item['version'],
+                            up[item["title"]],
+                        ),
+                        autocomplete="pid:" + item['id'],
+                        arg=item["href"],
+                        icon=icon or Icon.PROGRAM,
+                        quicklookurl=icon or Icon.PROGRAM,
+                        copytext=item['href'],
+                        valid=True,
+                        largetext=item["title"],
+                    )
+                    i.add_modifier(
+                        "cmd",
+                        "Скопировать ссылку",
+                        arg=item["href"],
+                        valid=True
+                    )
+                    i.add_modifier(
+                        "shift",
+                        'Посмотреть "%s" в Alfred' % item['title'],
+                    )
 
         elif "id" in prefixes:
             pr = list(filter(lambda x: x.get('id') == query, programs["data"]['items']))
@@ -128,11 +209,13 @@ def main(wf):
                     title="Такой программы не существует!",
                     subtitle="Введите другой ID",
                     autocomplete="p:" + query,
-                    icon=ICON_ERROR,
+                    icon=Icon.ERROR,
                 )
             else:
                 item = pr[0]  # type: dict
                 icon = wf.cached_data(item['id'], None, 0)
+                if icon is None or not exists(icon):
+                    icon = Icon.PROGRAM
                 _id = item["id"]
 
                 data = wf.get_background_data("info_" + _id, max_age=MAX_AGE, args=[_id], task="info", rerun_item=dict(
@@ -158,7 +241,7 @@ def main(wf):
                         title="Издатель / Автор",
                         subtitle=data["author"],
                         largetext=data["author"],
-                        icon=ICON_BUSTS_IN_SILHOUETTE,
+                        icon=Icon.BUSTS_IN_SILHOUETTE,
                     )
 
                     info = data["info"]  # type: dict
@@ -168,14 +251,14 @@ def main(wf):
                                 title=k,
                                 subtitle=v,
                                 largetext=v,
-                                icon=ICON_INFO
+                                icon=Icon.INFO
                             )
 
                     wf.add_item(
                         title="Веб-сайт",
                         subtitle=data['website'],
                         arg=data["website"],
-                        icon=ICON_WEB,
+                        icon=Icon.ERROR,
                         quicklookurl=data["website"],
                         valid=True
                     )
@@ -183,7 +266,7 @@ def main(wf):
                         title="Описание (⌘+L для просмотра)",
                         subtitle=data["description"],
                         largetext=data["description"],
-                        icon=ICON_PAGE_FACING_UP,
+                        icon=Icon.PAGE_FACING_UP,
                     )
                     attachment = data['attachment']
                     if attachment['href']:
@@ -191,7 +274,7 @@ def main(wf):
                             title=attachment['text'] or "Ссылка на скачивание",
                             subtitle=attachment['href'],
                             arg=attachment['href'],
-                            icon=ICON_LINK,
+                            icon=Icon.LINK,
                             valid=True
                         )
                     similar = data['similar']
@@ -199,10 +282,12 @@ def main(wf):
                         wf.add_item(
                             title="Похожие приложения:",
                             subtitle="Найдено %s штук" % len(similar),
-                            icon=ICON_DESKTOP_COMPUTER
+                            icon=Icon.DESKTOP_COMPUTER
                         )
                         for i in similar:
                             s_icon = wf.cached_data(i['id'], None, 0)
+                            if s_icon is None or not exists(s_icon):
+                                s_icon = Icon.PROGRAM
                             wf.add_item(
                                 title=i['title'],
                                 subtitle="(↹ для доп. информации) %s  ●  %s" % (i["description"], i['version']),
@@ -224,19 +309,23 @@ def main(wf):
                     c if len(dat) == c else "%s из %s" % (len(dat), c),
                     word_with_number(c)
                 ),
-                icon=ICON_TECHNOLOGIST,
+                icon=Icon.TECHNOLOGIST,
                 autocomplete="p:"
             )
 
             for item in dat:
                 icon = wf.cached_data(item['id'], None, 0)
+                if icon is None or not exists(icon):
+                    icon = Icon.PROGRAM
+
                 i = wf.add_item(
                     title=item['title'],
                     subtitle="(↹ для доп. информации) %s  ●  %s" % (item["description"], item['version']),
                     autocomplete="pid:" + item['id'],
-                    arg=item["href"],
-                    icon=icon,
-                    quicklookurl=icon,
+                    arg="pid:" + item['id'],
+                    icon=icon or Icon.PROGRAM,
+                    # quicklookurl=icon or Icon.PROGRAM,
+                    quicklookurl=item['href'],
                     copytext=item['href'],
                     valid=True,
                     largetext=item["title"],
@@ -249,7 +338,8 @@ def main(wf):
                 )
                 i.add_modifier(
                     "shift",
-                    'Посмотреть "%s" в Alfred' % item['title'],
+                    'Открыть "%s" в браузере' % item['title'],
+                    arg=item["href"]
                     # valid=False
                 )
                 # wf.rerun = 2
@@ -258,7 +348,7 @@ def main(wf):
         games = wf.get_background_data(GAMES, max_age=MAX_AGE, rerun_item=dict(
             title="Поиск по играм",
             autocomplete="g:",
-            icon=ICON_VIDEO_GAME,
+            icon=Icon.VIDEO_GAME,
         ))
 
         if games is None:
@@ -271,11 +361,13 @@ def main(wf):
                     title="Такой игры не существует!",
                     subtitle="Введите другой ID",
                     autocomplete="g:" + query,
-                    icon=ICON_ERROR,
+                    icon=Icon.ERROR,
                 )
             else:
                 item = gm[0]  # type: dict
                 icon = wf.cached_data(item['id'], None, 0)
+                if icon is None or not exists(icon):
+                    icon = Icon.GAME
                 _id = item["id"]
 
                 data = wf.get_background_data("info_" + _id, max_age=MAX_AGE, args=[_id], task="info-game",
@@ -302,7 +394,7 @@ def main(wf):
                         title="Издатель / Автор",
                         subtitle=data["author"],
                         largetext=data["author"],
-                        icon=ICON_BUSTS_IN_SILHOUETTE,
+                        icon=Icon.BUSTS_IN_SILHOUETTE,
                     )
 
                     info = data["info"]  # type: dict
@@ -312,14 +404,14 @@ def main(wf):
                                 title=k,
                                 subtitle=v,
                                 largetext=v,
-                                icon=ICON_INFO
+                                icon=Icon.INFO
                             )
 
                     wf.add_item(
                         title="Веб-сайт",
                         subtitle=data['website'],
                         arg=data["website"],
-                        icon=ICON_WEB,
+                        icon=Icon.ERROR,
                         quicklookurl=data["website"],
                         valid=True
                     )
@@ -327,7 +419,7 @@ def main(wf):
                         title="Описание (⌘+L для просмотра)",
                         subtitle=data["description"],
                         largetext=data["description"],
-                        icon=ICON_PAGE_FACING_UP,
+                        icon=Icon.PAGE_FACING_UP,
                     )
                     attachment = data['attachment']
                     if attachment['href']:
@@ -335,7 +427,7 @@ def main(wf):
                             title=attachment['text'] or "Ссылка на скачивание",
                             subtitle=attachment['href'],
                             arg=attachment['href'],
-                            icon=ICON_LINK,
+                            icon=Icon.LINK,
                             valid=True
                         )
                     similar = data['similar']
@@ -343,10 +435,12 @@ def main(wf):
                         wf.add_item(
                             title="Похожие игры:",
                             subtitle="Найдено %s штук" % len(similar),
-                            icon=ICON_VIDEO_GAME
+                            icon=Icon.VIDEO_GAME
                         )
                         for i in similar:
                             s_icon = wf.cached_data(i['id'], None, 0)
+                            if s_icon is None or not exists(s_icon):
+                                s_icon = Icon.GAME
                             wf.add_item(
                                 title=i['title'],
                                 subtitle="(↹ для доп. информации) %s" % i["description"],
@@ -368,12 +462,14 @@ def main(wf):
                     c if len(dat) == c else "%s из %s" % (len(dat), c),
                     word_with_number(c)
                 ),
-                icon=ICON_VIDEO_GAME,
+                icon=Icon.VIDEO_GAME,
                 autocomplete="g:"
             )
 
             for item in dat:
                 icon = wf.cached_data(item['id'], None, 0)
+                if icon is None or not exists(icon):
+                    icon = Icon.GAME
                 i = wf.add_item(
                     title=item['title'],
                     subtitle="(↹ для доп. информации) %s" % (item["description"]),
@@ -415,7 +511,7 @@ def main(wf):
                 arg="pid:" + query,
                 autocomplete="pid:" + query,
                 valid=False,
-                icon=ICON_TECHNOLOGIST,
+                icon=Icon.TECHNOLOGIST,
             )
 
         wf.add_item(
@@ -424,7 +520,7 @@ def main(wf):
             arg="p:" + query,
             autocomplete="p:" + query,
             valid=False,
-            icon=ICON_TECHNOLOGIST,
+            icon=Icon.TECHNOLOGIST,
         )
 
         if is_id:
@@ -434,7 +530,7 @@ def main(wf):
                 arg="gid:" + query,
                 autocomplete="gid:" + query,
                 valid=False,
-                icon=ICON_VIDEO_GAME,
+                icon=Icon.VIDEO_GAME,
             )
 
         wf.add_item(
@@ -443,7 +539,7 @@ def main(wf):
             arg="g:" + query,
             autocomplete="g:" + query,
             valid=False,
-            icon=ICON_VIDEO_GAME,
+            icon=Icon.VIDEO_GAME,
         )
 
     if get_var_boolean("DEBUG"):
@@ -467,4 +563,5 @@ if __name__ == u"__main__":
     )
     log = wf.logger
     log.setLevel("INFO")
+    log.setLevel("DEBUG")
     sys.exit(wf.run(main))

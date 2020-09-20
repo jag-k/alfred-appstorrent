@@ -15,6 +15,8 @@ except ImportError:
 from workflow import Workflow3
 from workflow.background import run_in_background, is_running
 
+from workflow import ICON_ERROR, ICON_WEB, ICON_INFO
+
 Str = str or unicode
 
 SEARCH_DOT = "⬜️"
@@ -32,27 +34,41 @@ LOADING_BRAILLE = [
 
 EMOJI_DIR = join(curdir, "icons")
 
-ICON_GEAR = join(EMOJI_DIR, "gear.png")
-ICON_LINK = join(EMOJI_DIR, "link.png")
-ICON_VIDEO_GAME = join(EMOJI_DIR, "video-game.png")
-ICON_TECHNOLOGIST = join(EMOJI_DIR, "technologist.png")
-ICON_PAGE_FACING_UP = join(EMOJI_DIR, "page-facing-up.png")
-ICON_DESKTOP_COMPUTER = join(EMOJI_DIR, "desktop-computer.png")
-ICON_BUSTS_IN_SILHOUETTE = join(EMOJI_DIR, "busts-in-silhouette.png")
-ICON_MAGNIFYING_GLASS_TILTED_LEFT = join(EMOJI_DIR, "magnifying-glass-tilted-left.png")
 
-ICON_DIR = join(curdir, "image")
+class Icon(object):
+    GAME = join(EMOJI_DIR, "game.svg")
+    PRODUCT = join(EMOJI_DIR, "product.svg")
+    PROGRAM = join(EMOJI_DIR, "program.svg")
+    STATE = join(EMOJI_DIR, "state.svg")
 
-MAX_AGE = 60 * 60 * 24
+    GEAR = join(EMOJI_DIR, "gear.png")
+    LINK = join(EMOJI_DIR, "link.png")
+    VIDEO_GAME = join(EMOJI_DIR, "video-game.png")
+    TECHNOLOGIST = join(EMOJI_DIR, "technologist.png")
+    PAGE_FACING_UP = join(EMOJI_DIR, "page-facing-up.png")
+    DESKTOP_COMPUTER = join(EMOJI_DIR, "desktop-computer.png")
+    BUSTS_IN_SILHOUETTE = join(EMOJI_DIR, "busts-in-silhouette.png")
+    MAGNIFYING_GLASS_TILTED_LEFT = join(EMOJI_DIR, "magnifying-glass-tilted-left.png")
+
+    ERROR = ICON_ERROR
+    WEB = ICON_WEB
+    INFO = ICON_INFO
+
+    DIR = join(curdir, "image")
+
+
+# MAX_AGE at the bottom of the file
 
 PROGRAMS = "programs"
 GAMES = "games"
+UPDATES = "CHECK_UPDATE"
 
 PREFIXES = {
     "id": "id",
     'p': PROGRAMS,
     'g': GAMES,
-    's': "FORCE_SEARCH"
+    's': "FORCE_SEARCH",
+    "u": UPDATES
 }
 PREFIX_SYMBOL_END = ':'
 
@@ -76,6 +92,18 @@ def get_var_boolean(key, default=False):
     if not a:
         return default
     return a in ("yes", "on", '1', "true", True)
+
+
+def get_var_numeric(key, default=None):
+    # type: (Str, int or float) -> int or float
+    a = get_var(key, default)
+    try:
+        return int(a)
+    except ValueError:
+        try:
+            return float(a)
+        except ValueError:
+            return default
 
 
 def get_var(key, default=None):
@@ -122,17 +150,18 @@ class Workflow(Workflow3):
 
         data = self.cached_data(name, data_func, 0)
         self.logger.debug("Is `%s` running: %s", name, is_running(name))
-        if not self.cached_data_fresh(name, max_age):
-            if get_var_boolean("DEBUG"):
-                import update
+
+        if max_age and not self.cached_data_fresh(name, max_age):
+            if get_var_boolean("SUPER_DEBUG"):
                 Task.wf = self
-                self.logger.debug("Start task: %s; %s", task, args)
+                self.logger.info("Start task: %s; %s", task, args)
                 return Task.run(task, *args)
+
             else:
-                self.logger.debug("Start task: %s; %s", task, args)
+                self.logger.info("Start task: %s; %s", task, args)
                 cmd = ['/usr/bin/python', self.workflowfile("update.py"), task] + args
                 d = run_in_background(name, cmd)
-                self.logger.debug("Start task: %s; %s (%s)", task, args, d)
+                self.logger.info("Start task: %s; %s (%s)", task, args, d)
 
         if is_running(name):
             if rerun_item and "title" in rerun_item:
@@ -142,7 +171,6 @@ class Workflow(Workflow3):
                 rerun_item["subtitle"] = LOADINGS[lt](self)
                 self.add_item(**rerun_item)
             self.rerun = rerun
-            # self.send_feedback()
             return None
         return data
 
@@ -170,3 +198,7 @@ class Task(object):
         if task in cls._tasks:
             cls.wf.logger.warning("Start TASK: %s %s", task, args)
             return cls._tasks.get(task)(cls.wf, *args)
+
+
+MAX_AGE = get_var_numeric("MAX_AGE", 60 * 60 * 24)
+# MAX_AGE = 0
